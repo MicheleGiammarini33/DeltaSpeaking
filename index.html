@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Speaking Coach</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
+        #response { margin-top: 20px; font-size: 18px; }
+        #status { margin-top: 10px; font-size: 16px; color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Speak English with AI</h1>
+    <button onclick="startListening()">Speak</button>
+    <p id="status"></p>
+    <p id="response"></p>
+    
+    <script>
+        const apiKey = '3a228f3c864147999f24e8c63886263a';  // Insert your Azure OpenAI API Key
+        const endpoint = 'https://wia.openai.azure.com/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15-preview';  // Insert your Azure OpenAI endpoint
+
+        function startListening() {
+            if (!navigator.mediaDevices || !window.SpeechRecognition && !window.webkitSpeechRecognition) {
+                document.getElementById('status').innerText = "❌ Speech recognition is not supported in this browser.";
+                return;
+            }
+
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
+                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.lang = 'en-US';
+                document.getElementById('status').innerText = "🎤 Listening... Speak now!";
+                recognition.start();
+
+                recognition.onresult = async (event) => {
+                    let spokenText = event.results[0][0].transcript;
+                    document.getElementById('status').innerText = "🔄 Processing...";
+                    document.getElementById('response').innerText = `You said: "${spokenText}"`;
+                    let correctedText = await correctText(spokenText);
+                    speak(correctedText);
+                };
+
+                recognition.onspeechend = () => {
+                    document.getElementById('status').innerText = "⏳ Processing complete.";
+                };
+
+                recognition.onerror = (event) => {
+                    let errorMessage = "❌ Speech recognition error.";
+                    if (event.error === 'not-allowed') {
+                        errorMessage = "❌ Microphone access denied. Grant permissions in browser settings.";
+                    }
+                    document.getElementById('status').innerText = errorMessage;
+                };
+            }).catch(() => {
+                document.getElementById('status').innerText = "❌ Microphone access denied. Check browser settings.";
+            });
+        }
+
+        async function correctText(text) {
+            const response = await fetch(`${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    messages: [{ role: 'system', content: "Correct and improve the user's sentence while maintaining the original meaning." },
+                               { role: 'user', content: text }],
+                    max_tokens: 100
+                })
+            });
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        function speak(text) {
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            synth.speak(utterance);
+            document.getElementById('response').innerText = `Corrected: "${text}"`;
+            document.getElementById('status').innerText = "✅ Correction complete!";
+        }
+    </script>
+</body>
+</html>
