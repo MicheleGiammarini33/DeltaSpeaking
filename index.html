@@ -4,21 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>English Speaking Coach</title>
+    <link rel="manifest" href="manifest.json">
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        button {
-            width: 100px;
-            height: 100px;
+        .mic-button {
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            font-size: 16px;
+            font-size: 24px;
             background-color: #4CAF50;
             color: white;
             border: none;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease, transform 0.2s;
         }
-        button:active {
+        .mic-button:active {
             background-color: #45a049;
+            transform: scale(1.1);
         }
         #response { margin-top: 20px; font-size: 18px; }
         #status { margin-top: 10px; font-size: 16px; color: blue; }
@@ -26,17 +32,17 @@
 </head>
 <body>
     <h1>Speak English with AI</h1>
-    <button id="speakButton" onmousedown="startListening()" onmouseup="stopListening()" ontouchstart="startListening()" ontouchend="stopListening()">🎤</button>
+    <button id="speakButton" class="mic-button" onmousedown="startListening()" onmouseup="stopListening()" ontouchstart="startListening()" ontouchend="stopListening()">🎤</button>
     <p id="status"></p>
     <p id="response"></p>
-    
+
     <script>
         let recognition;
         let isListening = false;
 
         function startListening() {
             if (!navigator.mediaDevices || !window.SpeechRecognition && !window.webkitSpeechRecognition) {
-                document.getElementById('status').innerText = "❌ Speech recognition is not supported in this browser.";
+                document.getElementById('status').innerText = "❌ Speech recognition is not supported.";
                 return;
             }
 
@@ -44,7 +50,7 @@
                 if (!isListening) {
                     recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
                     recognition.lang = 'en-US';
-                    document.getElementById('status').innerText = "🎤 Listening... Speak now!";
+                    document.getElementById('status').innerText = "🎤 Listening...";
                     recognition.start();
                     isListening = true;
 
@@ -61,15 +67,15 @@
                     };
 
                     recognition.onerror = (event) => {
-                        let errorMessage = "❌ Speech recognition error.";
+                        let errorMessage = "❌ Error.";
                         if (event.error === 'not-allowed') {
-                            errorMessage = "❌ Microphone access denied. Grant permissions in browser settings.";
+                            errorMessage = "❌ Microphone access denied.";
                         }
                         document.getElementById('status').innerText = errorMessage;
                     };
                 }
             }).catch(() => {
-                document.getElementById('status').innerText = "❌ Microphone access denied. Check browser settings.";
+                document.getElementById('status').innerText = "❌ Microphone access denied.";
             });
         }
 
@@ -77,7 +83,7 @@
             if (recognition && isListening) {
                 recognition.stop();
                 isListening = false;
-                document.getElementById('status').innerText = "⏳ Stopped listening.";
+                document.getElementById('status').innerText = "⏳ Stopped.";
             }
         }
 
@@ -86,10 +92,10 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'api-key': '3a228f3c864147999f24e8c63886263a' // API Key diretta
+                    'api-key': '3a228f3c864147999f24e8c63886263a'
                 },
                 body: JSON.stringify({
-                    messages: [{ role: 'system', content: "Correct and improve the user's sentence while maintaining the original meaning and ansewer to the question" },
+                    messages: [{ role: 'system', content: "Correct and improve the user's sentence." },
                                { role: 'user', content: text }],
                     max_tokens: 100
                 })
@@ -101,7 +107,7 @@
             }
 
             const data = await response.json();
-            return data.choices?.[0]?.message?.content || "No response received.";
+            return data.choices?.[0]?.message?.content || "No response.";
         }
 
         function speak(text) {
@@ -110,8 +116,15 @@
             utterance.lang = 'en-US';
             synth.speak(utterance);
             document.getElementById('response').innerText = `Corrected: "${text}"`;
-            document.getElementById('status').innerText = "✅ Correction complete!";
+            document.getElementById('status').innerText = "✅ Done!";
         }
+
+        // Install prompt for PWA
+        window.addEventListener('beforeinstallprompt', (event) => {
+            event.preventDefault();
+            let installPrompt = event;
+            document.getElementById('status').innerText = "⬇ Install this app!";
+        });
     </script>
 </body>
 </html>
