@@ -6,20 +6,36 @@
     <title>English Speaking Coach</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
+        button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:active {
+            background-color: #45a049; /* Darker green when button is pressed */
+        }
         #response { margin-top: 20px; font-size: 18px; }
         #status { margin-top: 10px; font-size: 16px; color: blue; }
     </style>
 </head>
 <body>
     <h1>Speak English with AI</h1>
-    <button onclick="startListening()">Speak</button>
+    <button id="speakButton" onmousedown="startListening()" onmouseup="stopListening()" ontouchstart="startListening()" ontouchend="stopListening()">🎤</button>
     <p id="status"></p>
     <p id="response"></p>
     
     <script>
         const apiKey = '3a228f3c864147999f24e8c63886263a';  // Insert your Azure OpenAI API Key
         const endpoint = 'https://wia.openai.azure.com/openai/deployments/gpt-4/chat/completions?api-version=2024-02-15-preview';  // Insert your Azure OpenAI endpoint
+
+        let recognition;
+        let isListening = false;
 
         function startListening() {
             if (!navigator.mediaDevices || !window.SpeechRecognition && !window.webkitSpeechRecognition) {
@@ -28,33 +44,44 @@
             }
 
             navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
-                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-                recognition.lang = 'en-US';
-                document.getElementById('status').innerText = "🎤 Listening... Speak now!";
-                recognition.start();
+                if (!isListening) {
+                    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                    recognition.lang = 'en-US';
+                    document.getElementById('status').innerText = "🎤 Listening... Speak now!";
+                    recognition.start();
+                    isListening = true;
 
-                recognition.onresult = async (event) => {
-                    let spokenText = event.results[0][0].transcript;
-                    document.getElementById('status').innerText = "🔄 Processing...";
-                    document.getElementById('response').innerText = `You said: "${spokenText}"`;
-                    let correctedText = await correctText(spokenText);
-                    speak(correctedText);
-                };
+                    recognition.onresult = async (event) => {
+                        let spokenText = event.results[0][0].transcript;
+                        document.getElementById('status').innerText = "🔄 Processing...";
+                        document.getElementById('response').innerText = `You said: "${spokenText}"`;
+                        let correctedText = await correctText(spokenText);
+                        speak(correctedText);
+                    };
 
-                recognition.onspeechend = () => {
-                    document.getElementById('status').innerText = "⏳ Processing complete.";
-                };
+                    recognition.onspeechend = () => {
+                        document.getElementById('status').innerText = "⏳ Processing complete.";
+                    };
 
-                recognition.onerror = (event) => {
-                    let errorMessage = "❌ Speech recognition error.";
-                    if (event.error === 'not-allowed') {
-                        errorMessage = "❌ Microphone access denied. Grant permissions in browser settings.";
-                    }
-                    document.getElementById('status').innerText = errorMessage;
-                };
+                    recognition.onerror = (event) => {
+                        let errorMessage = "❌ Speech recognition error.";
+                        if (event.error === 'not-allowed') {
+                            errorMessage = "❌ Microphone access denied. Grant permissions in browser settings.";
+                        }
+                        document.getElementById('status').innerText = errorMessage;
+                    };
+                }
             }).catch(() => {
                 document.getElementById('status').innerText = "❌ Microphone access denied. Check browser settings.";
             });
+        }
+
+        function stopListening() {
+            if (recognition && isListening) {
+                recognition.stop();
+                isListening = false;
+                document.getElementById('status').innerText = "⏳ Stopped listening.";
+            }
         }
 
         async function correctText(text) {
