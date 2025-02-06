@@ -17,7 +17,7 @@ DeltaSpeaking AI is a web-based application that helps users improve their spoke
 ## Installation & Usage
 1. Clone the repository:
    ```sh
-   git clone https://github.com/your-repo/english-speaking-ai.git
+   git clone https://github.com/your-repo/DeltaSpeaking.git
    ```
 2. Open the `index.html` file in a browser (Chrome recommended).
 3. Click the **Speak** button and start speaking.
