@@ -1,7 +1,7 @@
-# English Speaking AI
+# DeltaSpeaking
 
 ## Description
-English Speaking AI is a web-based application that helps users improve their spoken English by providing real-time speech recognition, grammatical corrections, and pronunciation feedback using Azure OpenAI's GPT-4 model.
+DeltaSpeaking AI is a web-based application that helps users improve their spoken English by providing real-time speech recognition, grammatical corrections, and pronunciation feedback using Azure OpenAI's GPT-4 model.
 
 ## Features
 - 🎤 Real-time speech recognition (Google Web Speech API)
